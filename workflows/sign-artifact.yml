@@ -1,0 +1,17 @@
+name: Sign Artifact Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Sign Artifact
+      uses: <repository>/.github/workflows/sign-artifact.yml@<version>
+      with:
+        subject-name: "your-artifact.tar.gz" # Replace with actual artifact name
+        subject-digest: "your-artifact-digest" # Replace with SHA-256 digest
