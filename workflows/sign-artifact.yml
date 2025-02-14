@@ -1,17 +1,23 @@
-name: Sign Artifact Workflow
+name: Sign Artifact
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      artifact-path:
+            required: true
+            type: string
 
 jobs:
-  sign:
+  sign-artifact:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
 
     steps:
-    - name: Sign Artifact
-      uses: <repository>/.github/workflows/sign-artifact.yml@<version>
-      with:
-        subject-name: "your-artifact.tar.gz" # Replace with actual artifact name
-        subject-digest: "your-artifact-digest" # Replace with SHA-256 digest
+    - name: Attest Build Provenance
+          uses: actions/attest-build-provenance@<version>
+          with:
+          subject-name: ${{ inputs.subject-name }}
+          subject-digest: ${{ inputs.subject-digest }}
