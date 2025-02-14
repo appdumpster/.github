@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: Attest Build Provenance
-          uses: actions/attest-build-provenance@<version>
-          with:
-          subject-name: ${{ inputs.subject-name }}
-          subject-digest: ${{ inputs.subject-digest }}
+      uses: actions/attest-build-provenance@<version>
+      with:
+      subject-name: ${{ inputs.subject-name }}
+      subject-digest: ${{ inputs.subject-digest }}
