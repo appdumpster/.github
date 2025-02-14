@@ -30,9 +30,9 @@ jobs:
     - name: Log in to registry
       uses: redhat-actions/podman-login@v1
       with:
-        username: ${{ inputs.registry-user }}
+        username: ${{ secrets.registry-user }}
         password: ${{ secrets.registry-password }}
-        registry: ${{ secrets.registry-url }}
+        registry: ${{ inputs.registry-url }}
 
     - name: Attest Build Provenance
       uses: actions/attest-build-provenance@v2
