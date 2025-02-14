@@ -2,17 +2,18 @@ name: Sign Artifact
 
 on:
   workflow_call:
+    secrets:
+      registry-user:
+            required: true
+            type: string
+      registry-password:
+            required: true
+            type: string
     inputs:
       subject-name:
             required: true
             type: string
       subject-digest:
-            required: true
-            type: string
-      registry-user:
-            required: true
-            type: string
-      registry-password:
             required: true
             type: string
       registry-url:
@@ -32,8 +33,8 @@ jobs:
       uses: redhat-actions/podman-login@v1
       with:
         username: ${{ inputs.registry-user }}
-        password: ${{ inputs.registry-password }}
-        registry: ${{ inputs.registry-url }}
+        password: ${{ secrets.registry-password }}
+        registry: ${{ secrets.registry-url }}
 
     - name: Attest Build Provenance
       uses: actions/attest-build-provenance@v2
