@@ -9,6 +9,15 @@ on:
       subject-digest:
             required: true
             type: string
+      registry-user:
+            required: true
+            type: string
+      registry-password:
+            required: true
+            type: string
+      registry-url:
+            required: true
+            type: string
 
 jobs:
   sign-artifact:
@@ -19,8 +28,16 @@ jobs:
       contents: read
 
     steps:
+    - name: Log in to registry
+      uses: redhat-actions/podman-login@v1
+      with:
+        username: ${{ inputs.registry-user }}
+        password: ${{ inputs.registry-password }}
+        registry: ${{ inputs.registry-url }}
+
     - name: Attest Build Provenance
       uses: actions/attest-build-provenance@v2
       with:
         subject-name: ${{ inputs.subject-name }}
         subject-digest: ${{ inputs.subject-digest }}
+        push-to-registry: true
