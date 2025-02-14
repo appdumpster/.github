@@ -3,7 +3,10 @@ name: Sign Artifact
 on:
   workflow_call:
     inputs:
-      artifact-path:
+      subject-name:
+            required: true
+            type: string
+      subject-digest:
             required: true
             type: string
 
@@ -17,7 +20,7 @@ jobs:
 
     steps:
     - name: Attest Build Provenance
-      uses: actions/attest-build-provenance@<version>
+      uses: actions/attest-build-provenance@v2
       with:
-      subject-name: ${{ inputs.subject-name }}
-      subject-digest: ${{ inputs.subject-digest }}
+        subject-name: ${{ inputs.subject-name }}
+        subject-digest: ${{ inputs.subject-digest }}
