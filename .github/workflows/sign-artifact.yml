@@ -11,11 +11,10 @@ on:
       image-registry-password:
         description: Password to log in to the container registry.
         required: true
-    inputs:
       image-registry-username:
         description: Username to log in to the container registry.
-        type: string
         required: true
+    inputs:
       image-registry:
         description: OCI registry to push images to.
         type: string
@@ -48,7 +47,7 @@ jobs:
       uses: redhat-actions/podman-login@v1
       with:
         registry: ${{ inputs.image-registry }}
-        username: ${{ inputs.image-registry-username }}
+        username: ${{ secrets.image-registry-username }}
         password: ${{ secrets.image-registry-password }}
 
     - name: Sign image with GitHub OIDC Token
