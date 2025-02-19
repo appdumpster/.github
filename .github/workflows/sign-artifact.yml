@@ -1,42 +1,80 @@
-name: Sign Artifact
+---
+name: Attest to a container image, without building it.
+# Based on https://github.com/lcarva/trusted-workflows/blob/main/.github/workflows/builder-container-slsa3.yaml
+
+permissions:
+  contents: read
 
 on:
   workflow_call:
     secrets:
-      registry-user:
-            required: true
-      registry-password:
-            required: true
+      image-registry-password:
+        description: Password to log in to the container registry.
+        required: true
     inputs:
-      subject-name:
-            required: true
-            type: string
-      subject-digest:
-            required: true
-            type: string
-      registry-url:
-            required: true
-            type: string
+      image-registry-username:
+        description: Username to log in to the container registry.
+        type: string
+        required: true
+      image-registry:
+        description: OCI registry to push images to.
+        type: string
+        required: true
+      image-repository:
+        description: The OCI repository to push the image to *without* the registry.
+        type: string
+        required: true
+      image-digest:
+        description: Digest of the image to attest to
+        type: string
+        required: true
 
 jobs:
-  sign-artifact:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
+
     permissions:
+      # Needed for signing the container image with GitHub OIDC Token
       id-token: write
-      attestations: write
       contents: read
+      attestations: write
+      packages: write
 
     steps:
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@main
+
     - name: Log in to registry
       uses: redhat-actions/podman-login@v1
       with:
-        username: ${{ secrets.registry-user }}
-        password: ${{ secrets.registry-password }}
-        registry: ${{ inputs.registry-url }}
+        registry: ${{ inputs.image-registry }}
+        username: ${{ inputs.image-registry-username }}
+        password: ${{ secrets.image-registry-password }}
 
-    - name: Attest Build Provenance
+    - name: Sign image with GitHub OIDC Token
+      run: cosign sign --yes ${REF}
+      env:
+        REF: >-
+          ${{ inputs.image-registry }}/${{ inputs.image-repository }}@${{ inputs.image-digest }}
+
+    - name: Generate artifact attestation
+      id: attestation
       uses: actions/attest-build-provenance@v2
       with:
-        subject-name: ${{ inputs.subject-name }}
-        subject-digest: ${{ inputs.subject-digest }}
-        push-to-registry: true
+        subject-name: ${{ inputs.image-registry }}/${{ inputs.image-repository }}
+        subject-digest: ${{ inputs.image-digest }}
+
+    # TODO: Hack to facilitate verification until https://github.com/sigstore/cosign/pull/3889
+    - name: Attach attestation
+      run: |
+        #!/bin/bash
+        set -euo pipefail
+
+        PREDICATE_TYPE="$(< "${BUNDLE_PATH}" jq -r '.dsseEnvelope.payload | @base64d | fromjson | .predicateType')"
+        < "${BUNDLE_PATH}" jq '.dsseEnvelope.payload | @base64d | fromjson | .predicate' > predicate.json
+
+        cosign attest --yes --predicate predicate.json --type "${PREDICATE_TYPE}" "${REF}"
+      env:
+        BUNDLE_PATH: ${{ steps.attestation.outputs.bundle-path }}
+        REF: >-
+          ${{ inputs.image-registry }}/${{ inputs.image-repository }}@${{ inputs.image-digest }}
